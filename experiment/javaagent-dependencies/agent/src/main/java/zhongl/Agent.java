@@ -21,9 +21,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 public class Agent {
 
     public static void premain(String args, Instrumentation inst) {
-        final ClassLoader loader = ClassLoader.getSystemClassLoader();
-        final ClassFileLocator locator = AgentBuilder.LocationStrategy.ForClassLoader.WEAK.classFileLocator(loader, JavaModule.UNSUPPORTED);
-
+        final ClassFileLocator sys = ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader());
 
         new AgentBuilder.Default()
                 .with(new AgentBuilder.Listener.Adapter() {
@@ -49,9 +47,12 @@ public class Agent {
                 .transform(new Transformer() {
                     @Override
                     public Builder<?> transform(Builder<?> b, TypeDescription td, ClassLoader cl, JavaModule m) {
-                        final ClassFileLocator.Compound compound = new ClassFileLocator.Compound(ClassFileLocator.ForClassLoader.of(cl), locator);
-                        final TypeDescription desc = TypePool.Default.of(compound).describe(Probe.class.getName()).resolve();
-                        return b.visit(Advice.to(desc, compound).on(named("executeInternal")));
+                        final ClassFileLocator cur = ClassFileLocator.ForClassLoader.of(cl);
+                        final ClassFileLocator.Compound locator = new ClassFileLocator.Compound(cur, sys);
+                        final TypeDescription desc = TypePool.Default.of(locator)
+                                                                     .describe(Probe.class.getName())
+                                                                     .resolve();
+                        return b.visit(Advice.to(desc, locator).on(named("executeInternal")));
                     }
                 }).installOn(inst);
     }
