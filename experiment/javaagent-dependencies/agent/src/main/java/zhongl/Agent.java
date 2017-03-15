@@ -1,46 +1,23 @@
 package zhongl;
 
 import net.bytebuddy.agent.builder.AgentBuilder;
-import net.bytebuddy.agent.builder.AgentBuilder.RawMatcher;
 import net.bytebuddy.agent.builder.AgentBuilder.Transformer.ForAdvice;
 import net.bytebuddy.asm.Advice;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.utility.JavaModule;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
 
 import java.lang.instrument.Instrumentation;
-import java.security.ProtectionDomain;
 
-import static net.bytebuddy.matcher.ElementMatchers.isSubTypeOf;
+import static net.bytebuddy.matcher.ElementMatchers.hasSuperType;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 public class Agent {
 
     public static void premain(String args, Instrumentation inst) {
-
         new AgentBuilder.Default()
-                .with(new AgentBuilder.Listener.Adapter() {
-
-                    @Override
-                    public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
-                        throwable.printStackTrace();
-                    }
-                })
                 .disableClassFormatChanges()
-                .type(new RawMatcher() {
-                    @Override
-                    public boolean matches(TypeDescription td, ClassLoader cl, JavaModule m, Class<?> cbr, ProtectionDomain pd) {
-                        try {
-                            final String name = "org.springframework.http.client.AbstractClientHttpRequest";
-                            final Class<?> c = cl.loadClass(name);
-                            return isSubTypeOf(c).matches(td);
-                        } catch (Exception e) {
-                            return false;
-                        }
-                    }
-                })
-                .transform(new ForAdvice().advice(named("executeInternal"), Probe.class.getName())).installOn(inst);
+                .type(hasSuperType(named("org.springframework.http.client.AbstractClientHttpRequest")))
+                .transform(new ForAdvice().advice(named("executeInternal"), "zhongl.Agent$Probe")).installOn(inst);
     }
 
     static class Probe {
