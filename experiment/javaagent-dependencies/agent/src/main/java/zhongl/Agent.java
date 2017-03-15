@@ -7,6 +7,8 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType.Builder;
 import net.bytebuddy.utility.JavaModule;
 import org.springframework.http.client.AbstractClientHttpRequest;
+import org.springframework.http.client.ClientHttpRequest;
+import org.springframework.http.client.ClientHttpResponse;
 
 import java.lang.instrument.Instrumentation;
 
@@ -27,9 +29,13 @@ public class Agent {
     }
 
     static class Probe {
-        @Advice.OnMethodEnter
-        static void enter(@Advice.Origin String name) {
-            System.out.println("enter " + name);
+        @Advice.OnMethodExit(onThrowable = Throwable.class)
+        static void exit(@Advice.Origin String name, @Advice.This ClientHttpRequest request, @Advice.Return ClientHttpResponse response) {
+            try {
+                System.out.printf("%s\t%d\t%s\n" , request.getMethod(), response.getRawStatusCode(), request.getURI());
+            } catch (Exception ignore) {
+                ignore.printStackTrace();
+            }
         }
     }
 }
