@@ -59,7 +59,7 @@ public class Agent {
 
     static class Probe {
         @Advice.OnMethodExit(onThrowable = Throwable.class)
-        static void exit(@Advice.Origin String name, @Advice.This ClientHttpRequest request, @Advice.Return ClientHttpResponse response) {
+        static void exit(@Advice.This ClientHttpRequest request, @Advice.Return ClientHttpResponse response) {
             try {
                 System.out.printf("%s\t%d\t%s\n", request.getMethod(), response.getRawStatusCode(), request.getURI());
             } catch (Exception ignore) {
