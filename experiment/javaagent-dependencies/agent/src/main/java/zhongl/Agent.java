@@ -3,11 +3,10 @@ package zhongl;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.agent.builder.AgentBuilder.RawMatcher;
 import net.bytebuddy.agent.builder.AgentBuilder.Transformer;
+import net.bytebuddy.agent.builder.AgentBuilder.Transformer.ForAdvice;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType.Builder;
-import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.JavaModule;
 import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.http.client.ClientHttpResponse;
@@ -21,7 +20,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 public class Agent {
 
     public static void premain(String args, Instrumentation inst) {
-        final ClassFileLocator sys = ClassFileLocator.ForClassLoader.of(ClassLoader.getSystemClassLoader());
+        final ForAdvice transformer = new ForAdvice().advice(named("executeInternal"), Probe.class.getName());
 
         new AgentBuilder.Default()
                 .with(new AgentBuilder.Listener.Adapter() {
@@ -47,12 +46,7 @@ public class Agent {
                 .transform(new Transformer() {
                     @Override
                     public Builder<?> transform(Builder<?> b, TypeDescription td, ClassLoader cl, JavaModule m) {
-                        final ClassFileLocator cur = ClassFileLocator.ForClassLoader.of(cl);
-                        final ClassFileLocator.Compound locator = new ClassFileLocator.Compound(cur, sys);
-                        final TypeDescription desc = TypePool.Default.of(locator)
-                                                                     .describe(Probe.class.getName())
-                                                                     .resolve();
-                        return b.visit(Advice.to(desc, locator).on(named("executeInternal")));
+                        return transformer.include(cl).transform(b, td, cl, m);
                     }
                 }).installOn(inst);
     }
