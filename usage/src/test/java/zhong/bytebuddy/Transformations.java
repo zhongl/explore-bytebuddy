@@ -83,13 +83,18 @@ public interface Transformations {
                     .method(ElementMatchers.named("toString"))
                     .intercept(FixedValue.value("Hello World!"))
                     .make().load(loader).getLoaded();
-            final Advice.WithCustomMapping mapping = Advice.withCustomMapping().bind(Probes.Custom.class, aClass);
-            return super.ab().with(new AgentBuilder.Listener.Adapter() {
-                @Override
-                public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
-                    throwable.printStackTrace();
-                }
-            }).type(is(Foo.class)).transform(new ForAdvice(mapping).advice(named("m"), Probes.BindClassParam.class.getName()));
+            try {
+                final Advice.WithCustomMapping mapping = Advice.withCustomMapping().bind(Probes.Custom.class, Object.class.getMethod("toString"));
+                return super.ab().with(new AgentBuilder.Listener.Adapter() {
+                    @Override
+                    public void onError(String typeName, ClassLoader classLoader, JavaModule module, boolean loaded, Throwable throwable) {
+                        throwable.printStackTrace();
+                    }
+                }).type(is(Foo.class)).transform(new ForAdvice(mapping).advice(named("m"), Probes.BindClassParam.class.getName()));
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+                return super.ab();
+            }
         }
 
         @Override
