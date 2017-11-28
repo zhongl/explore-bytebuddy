@@ -23,6 +23,7 @@ public class DriveTest {
     public static Collection<Case> transformers() {
         return Arrays.asList(
                 new Transformations.Multiples(),
+                new Transformations.BindParams(),
                 new Transformations.Decorating()
         );
     }

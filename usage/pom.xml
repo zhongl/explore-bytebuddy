@@ -15,12 +15,34 @@
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy-agent</artifactId>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>net.bytebuddy</groupId>
             <artifactId>byte-buddy</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy-maven-plugin</artifactId>
+                <version>1.6.12</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>transform-test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <transformations>
+                        <transformation>
+                            <plugin>zhong.bytebuddy.XxxPlugin</plugin>
+                        </transformation>
+                    </transformations>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

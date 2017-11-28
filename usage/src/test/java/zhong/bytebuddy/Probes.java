@@ -2,6 +2,10 @@ package zhong.bytebuddy;
 
 import net.bytebuddy.asm.Advice;
 
+import java.lang.annotation.Retention;
+
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
 public interface Probes {
 
     class PrintEnter {
@@ -19,4 +23,14 @@ public interface Probes {
         }
 
     }
+
+    class BindClassParam {
+        @Advice.OnMethodEnter
+        public static void enter(@Custom Object cls) {
+            System.out.println(cls);
+        }
+    }
+
+    @Retention(RUNTIME)
+    @interface Custom {}
 }
